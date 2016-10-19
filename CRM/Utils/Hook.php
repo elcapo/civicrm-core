@@ -2203,4 +2203,32 @@ abstract class CRM_Utils_Hook {
     );
   }
 
+  /**
+   * This hook is called while a transaction is being completed. The
+   * call is defined at CRM_Contribution_BAO_Contribute::completeOrder,
+   * when it has already processed the transaction completion and
+   * just before sending the email receipt.
+   * 
+   * When implementing this hook, you'll probably want to inspect the
+   * contribution itself, as well as the optional related objects:
+   * 
+   * $contribution = CRM_Utils_Array::value('contribution', $objects);
+   * $participant = CRM_Utils_Array::value('participant', $objects);
+   * $memberships = CRM_Utils_Array::value('membership', $objects);
+   * $recurContrib = CRM_Utils_Array::value('contributionRecur', $objects);
+   * $event = CRM_Utils_Array::value('event', $objects);
+   * 
+   * @param type $input
+   * @param type $ids
+   * @param type $objects
+   * @param type $transaction
+   * @param type $recur
+   */
+  public static function completeTransaction(&$input, &$ids, &$objects, &$transaction, $recur) {
+    return self::singleton()->invoke(5, $input, $ids,
+      $objects, $transaction, $recur,
+      self::$_nullObject, 'civicrm_completeTransaction'
+    );
+  }
+
 }

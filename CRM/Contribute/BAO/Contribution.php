@@ -4664,6 +4664,8 @@ LIMIT 1;";
       CRM_Activity_BAO_Activity::addActivity($participant);
     }
 
+    CRM_Utils_Hook::completeTransaction($input, $ids, $objects, $transaction, $recur);
+
     // CRM-9132 legacy behaviour was that receipts were sent out in all instances. Still sending
     // when array_key 'is_email_receipt doesn't exist in case some instances where is needs setting haven't been set
     if (!array_key_exists('is_email_receipt', $values) ||
