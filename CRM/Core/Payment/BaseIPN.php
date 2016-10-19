@@ -451,6 +451,8 @@ class CRM_Core_Payment_BaseIPN {
 
     CRM_Contribute_BAO_Contribution::completeOrder($input, $ids, $objects, $transaction, $recur, $contribution,
       $isRecurring, $isFirstOrLastRecurringPayment);
+
+    CRM_Utils_Hook::completeIPNTransaction($input, $ids, $objects, $transaction, $recur);
   }
 
   /**
