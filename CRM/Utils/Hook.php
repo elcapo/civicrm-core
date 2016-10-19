@@ -2224,10 +2224,11 @@ abstract class CRM_Utils_Hook {
    * @param type $transaction
    * @param type $recur
    */
-  public static function completeIPNTransaction(&$input, &$ids, &$objects, &$transaction, $recur) {
-    return self::singleton()->invoke(5, $input, $ids,
-      $objects, $transaction, $recur,
-      self::$_nullObject, 'civicrm_completeTransaction'
+  public static function completeIPNTransaction(&$objects) {
+    return self::singleton()->invoke(1, $objects,
+      self::$_nullObject, self::$_nullObject,
+      self::$_nullObject, self::$_nullObject,
+      self::$_nullObject, 'civicrm_completeIPNTransaction'
     );
   }
 
