@@ -2183,17 +2183,18 @@ INNER JOIN  civicrm_contact contact ON ( contact.id = membership.contact_id AND 
    * @throws \CRM_Core_Exception
    */
   public static function updateAllMembershipStatus($params = []) {
-    if (empty($params['only_active_membership_types'])) {
+    if (!array_key_exists('only_active_membership_types', $params)) {
       $params['only_active_membership_types'] = TRUE;
     }
-    if (empty($params['exclude_test_memberships'])) {
+    if (!array_key_exists('exclude_test_memberships', $params)) {
       $params['exclude_test_memberships'] = TRUE;
     }
+
     // We want all of the statuses as id => name, even the disabled ones (cf.
     // CRM-15475), to identify which are Pending, Deceased, Cancelled, and
     // Expired.
     $allStatus = CRM_Member_BAO_Membership::buildOptions('status_id', 'validate');
-    if (empty($params['exclude_membership_status_ids'])) {
+    if (!count($params['exclude_membership_status_ids'])) {
       $params['exclude_membership_status_ids'] = [
         array_search('Pending', $allStatus),
         array_search('Cancelled', $allStatus),
@@ -2201,8 +2202,9 @@ INNER JOIN  civicrm_contact contact ON ( contact.id = membership.contact_id AND 
         array_search('Deceased', $allStatus),
       ];
     }
+
     // Deceased is *always* excluded because it is has very specific processing below.
-    elseif (!in_array(array_search('Deceased', $allStatus), $params['exclude_membership_status_ids'])) {
+    if (!in_array(array_search('Deceased', $allStatus), $params['exclude_membership_status_ids'])) {
       $params['exclude_membership_status_ids'][] = array_search('Deceased', $allStatus);
     }
 
@@ -2220,6 +2222,7 @@ INNER JOIN  civicrm_contact contact ON ( contact.id = membership.contact_id AND 
       $whereClauses[] = 'civicrm_membership.is_test = 0';
     }
     $whereClause = implode(' AND ', $whereClauses);
+
     $activeMembershipClause = '';
     if ($params['only_active_membership_types']) {
       $activeMembershipClause = ' AND civicrm_membership_type.is_active = 1';

@@ -472,7 +472,9 @@ function civicrm_api3_job_process_membership($params) {
 
   // We need to pass this through as a simple array of membership status IDs as values.
   if (!empty($params['exclude_membership_status_ids'])) {
-    is_array($params['exclude_membership_status_ids']) ?: $params['exclude_membership_status_ids'] = [$params['exclude_membership_status_ids']];
+    $params['exclude_membership_status_ids'] = is_array($params['exclude_membership_status_ids']) ?
+      $params['exclude_membership_status_ids'] :
+      [$params['exclude_membership_status_ids']];
   }
   if (!empty($params['exclude_membership_status_ids']['IN'])) {
     $params['exclude_membership_status_ids'] = $params['exclude_membership_status_ids']['IN'];
@@ -497,6 +499,7 @@ function _civicrm_api3_job_process_membership_spec(&$params) {
   $params['only_active_membership_types']['title'] = 'Exclude disabled membership types';
   $params['only_active_membership_types']['description'] = 'Exclude disabled membership types from calculations (default = TRUE)';
   $params['only_active_membership_types']['type'] = CRM_Utils_Type::T_BOOLEAN;
+  $params['exclude_membership_status_ids']['api.default'] = [];
   $params['exclude_membership_status_ids']['title'] = 'Exclude membership status IDs from calculations';
   $params['exclude_membership_status_ids']['description'] = 'Default: Exclude Pending, Cancelled, Expired. Deceased will always be excluded';
 }
