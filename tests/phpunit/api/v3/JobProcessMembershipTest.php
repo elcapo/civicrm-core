@@ -315,13 +315,13 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
 
     // The deceased and test memberships shouldn't be changed
     $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
-    // $this->assertEquals('Current', $this->getMembershipStatus($testId));
+    $this->assertEquals('Current', $this->getMembershipStatus($testId));
 
     // The membership of an inactive type shouldn't be changed
     $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
 
     // The grace membership should should be changed
-    // $this->assertEquals('Current', $this->getMembershipStatus($graceId));
+    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
 
     // The pending membership should be changed
     $this->assertEquals('Current', $this->getMembershipStatus($pendingId));
