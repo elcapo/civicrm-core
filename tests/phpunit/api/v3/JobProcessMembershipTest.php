@@ -98,22 +98,22 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
   }
 
   /**
-   * Creates a test membership that should be in `grace` status
-   * but that won't be updated when the process is executed with
-   * the default parameters.
+   * Creates a test membership in `grace` status that should be
+   * in `current` status but that won't be updated unless the process
+   * is explicitly told not to exclude tests.
    */
-  public function createTestMembershipThatShouldBeGrace() {
+  public function createTestMembershipThatShouldBeCurrent() {
     $contactId = $this->individualCreate();
     $membershipId = $this->contactMembershipCreate([
       'contact_id' => $contactId,
       'start_date' => $this->_yesterday,
-      'end_date' => $this->_yesterday,
+      'end_date' => $this->_tomorrow,
       'is_test' => TRUE,
     ]);
 
     $this->callAPISuccess('Membership', 'create', [
       'id' => $membershipId,
-      'status_id' => array_search('Current', $this->_statuses),
+      'status_id' => array_search('Grace', $this->_statuses),
     ]);
 
     return $membershipId;
@@ -198,113 +198,279 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
   }
 
   /**
-   * Tests the process defaults:
-   * 
-   * - exclude_test_memberships:
-   *     exclude test memberships from calculations (default = TRUE)
-   * - only_active_membership_types:
-   *     exclude disabled membership types from calculations (default = TRUE)
-   * - exclude_membership_status_ids:
-   *     exclude Pending, Cancelled, Expired. Deceased will always be excluded
+   * Test that by default test memberships are excluded.
    */
-  public function testTheDefaults() {
-    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
-    $testId = $this->createTestMembershipThatShouldBeGrace();
+  public function testByDefaultTestsAreExcluded() {
+    $testId = $this->createTestMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', []);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($testId));
+  }
+
+  /**
+   * Test that by default memberships of inactive types are excluded.
+   */
+  public function testByDefaultInactiveAreExcluded() {
     $oldId = $this->createOldMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', []);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
+  }
+
+  /**
+   * Test that by default grace memberships are considered.
+   */
+  public function testByDefaultGraceIsConsidered() {
     $graceId = $this->createGraceMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', []);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
+  }
+
+  /**
+   * Test that by default pending memberships are excluded.
+   * 
+   * The pending status is still excluded as it's in the
+   * exclude_membership_status_ids list by default.
+   */
+  public function testByDefaultPendingIsExcluded() {
     $pendingId = $this->createPendingMembershipThatShouldBeCurrent();
 
     $this->callAPISuccess('job', 'process_membership', []);
 
-    // The deceased and test memberships shouldn't be changed
-    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
-    $this->assertEquals('Current', $this->getMembershipStatus($testId));
-
-    // The membership of an inactive type shouldn't be changed
-    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
-
-    // The grace membership should should be changed
-    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
-
-    // The pending membership shouldn't be changed
     $this->assertEquals('Pending', $this->getMembershipStatus($pendingId));
   }
 
   /**
-   * Tests including the test memberships:
-   * 
-   * - exclude_test_memberships:
-   *     exclude test memberships from calculations
+   * Test that by default memberships of type deceased are excluded.
    */
-  public function testIncludingTestMemberships() {
+  public function testByDefaultDeceasedIsExcluded() {
     $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
-    $testId = $this->createTestMembershipThatShouldBeGrace();
-    $oldId = $this->createOldMembershipThatShouldBeCurrent();
-    $graceId = $this->createGraceMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', []);
+
+    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
+  }
+
+  /**
+   * Test that when including test memberships,
+   * pending memberships are excluded.
+   * 
+   * The pending status is still excluded as it's in the
+   * exclude_membership_status_ids list by default.
+   */
+  public function testIncludingTestMembershipsExcludesPending() {
     $pendingId = $this->createPendingMembershipThatShouldBeCurrent();
 
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_test_memberships' => FALSE,
     ]);
 
-    // The deceased membership shouldn't be changed
-    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
-
-    // The test membership should should be changed
-    $this->assertEquals('Grace', $this->getMembershipStatus($testId));
-
-    // The membership of an inactive type shouldn't be changed
-    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
-
-    // The grace membership should should be changed
-    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
-
-    // The pending membership shouldn't be changed
     $this->assertEquals('Pending', $this->getMembershipStatus($pendingId));
   }
 
   /**
-   * Tests including inactive membership types:
-   * 
-   * - only_active_membership_types:
-   *     exclude disabled membership types from calculations (default = TRUE)
+   * Test that when including test memberships,
+   * grace memberships are considered.
    */
-  public function testIncludingInactiveMembershipTypes() {
-    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
-    $testId = $this->createTestMembershipThatShouldBeGrace();
-    $oldId = $this->createOldMembershipThatShouldBeCurrent();
+  public function testIncludingTestMembershipsConsidersGrace() {
     $graceId = $this->createGraceMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_test_memberships' => FALSE,
+    ]);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
+  }
+
+  /**
+   * Test that when including test memberships,
+   * memberships of inactive types are still ignored.
+   */
+  public function testIncludingTestMembershipsIgnoresInactive() {
+    $oldId = $this->createOldMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_test_memberships' => FALSE,
+    ]);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
+  }
+
+  /**
+   * Test that when including test memberships,
+   * acually includes test memberships.
+   */
+  public function testIncludingTestMembershipsActuallyIncludesThem() {
+    $testId = $this->createTestMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_test_memberships' => FALSE,
+    ]);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($testId));
+  }
+
+  /**
+   * Test that when including test memberships,
+   * memberships of type deceased are still ignored.
+   */
+  public function testIncludingTestMembershipsStillIgnoresDeceased() {
+    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_test_memberships' => FALSE,
+    ]);
+
+    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
+  }
+
+  /**
+   * Test that when including inactive membership types,
+   * pending memberships are considered.
+   * 
+   * The pending status is still excluded as it's in the
+   * exclude_membership_status_ids list by default.
+   */
+  public function testIncludingInactiveMembershipTypesStillExcludesPending() {
     $pendingId = $this->createPendingMembershipThatShouldBeCurrent();
 
     $this->callAPISuccess('job', 'process_membership', [
       'only_active_membership_types' => FALSE,
     ]);
 
-    // The deceased and test memberships shouldn't be changed
-    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
-    $this->assertEquals('Current', $this->getMembershipStatus($testId));
-
-    // The membership of an inactive type should be changed
-    $this->assertEquals('Current', $this->getMembershipStatus($oldId));
-
-    // The grace membership should have been reviewed
-    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
-
-    // The pending membership shouldn't be changed
     $this->assertEquals('Pending', $this->getMembershipStatus($pendingId));
   }
 
   /**
-   * Tests explicitly setting the status ids to exclude.
-   * 
-   * - exclude_membership_status_ids:
-   *     exclude Pending, Cancelled, Expired. Deceased will always be excluded
+   * Test that when including inactive membership types,
+   * grace memberships are considered.
    */
-  public function testSpecifyingTheStatusIdsToExclude() {
-    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
-    $testId = $this->createTestMembershipThatShouldBeGrace();
-    $oldId = $this->createOldMembershipThatShouldBeCurrent();
+  public function testIncludingInactiveMembershipTypesConsidersGrace() {
     $graceId = $this->createGraceMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'only_active_membership_types' => FALSE,
+    ]);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
+  }
+
+  /**
+   * Test that when including inactive membership types,
+   * memberships of disabled membership types are considered.
+   */
+  public function testIncludingInactiveMembershipTypesConsidersInactive() {
+    $oldId = $this->createOldMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'only_active_membership_types' => FALSE,
+    ]);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($oldId));
+  }
+
+  /**
+   * Test that when including inactive membership types,
+   * test memberships are still ignored.
+   */
+  public function testIncludingInactiveMembershipTypesStillIgnoresTests() {
+    $testId = $this->createTestMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'only_active_membership_types' => FALSE,
+    ]);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($testId));
+  }
+
+  /**
+   * Test that when including inactive membership types,
+   * memberships of type deceased are still ignored.
+   */
+  public function testMembershipTypeDeceasedIsExcluded() {
+    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'only_active_membership_types' => FALSE,
+    ]);
+
+    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
+  }
+
+  /**
+   * Test that when explicitly setting the status ids to exclude,
+   * memberships in deceased status are still ignored.
+   */
+  public function testSpecifyingTheStatusIdsToExcludeStillExcludesDeceased() {
+    $deceasedId = $this->createDeceasedMembershipThatShouldBeExpired();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_membership_status_ids' => [
+        array_search('Cancelled', $this->_statuses),
+      ]
+    ]);
+
+    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
+  }
+
+  /**
+   * Test that when explicitly setting the status ids to exclude,
+   * test memberships are still ignored.
+   */
+  public function testSpecifyingTheStatusIdsToExcludeStillExcludesTests() {
+    $testId = $this->createTestMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_membership_status_ids' => [
+        array_search('Cancelled', $this->_statuses),
+      ]
+    ]);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($testId));
+  }
+
+  /**
+   * Test that when explicitly setting the status ids to exclude,
+   * memberships of disabled membership types are still ignored.
+   */
+  public function testSpecifyingTheStatusIdsToExcludeStillExcludesInactive() {
+    $oldId = $this->createOldMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_membership_status_ids' => [
+        array_search('Cancelled', $this->_statuses),
+      ]
+    ]);
+
+    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
+  }
+
+  /**
+   * Test that when explicitly setting the status ids to exclude,
+   * grace memberships are considered by default.
+   */
+  public function testSpecifyingTheStatusIdsToExcludeGraceIsIncludedByDefault() {
+    $graceId = $this->createGraceMembershipThatShouldBeCurrent();
+
+    $this->callAPISuccess('job', 'process_membership', [
+      'exclude_membership_status_ids' => [
+        array_search('Cancelled', $this->_statuses),
+      ]
+    ]);
+
+    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
+  }
+
+  /**
+   * Test that when explicitly setting the status ids to exclude,
+   * if the specified list doesn't include pending, then pending
+   * memberships are considered.
+   */
+  public function testSpecifyingTheStatusIdsToExcludePendingIsExcludedByDefault() {
     $pendingId = $this->createPendingMembershipThatShouldBeCurrent();
 
     $this->callAPISuccess('job', 'process_membership', [
@@ -313,17 +479,6 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
       ]
     ]);
 
-    // The deceased and test memberships shouldn't be changed
-    $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
-    $this->assertEquals('Current', $this->getMembershipStatus($testId));
-
-    // The membership of an inactive type shouldn't be changed
-    $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
-
-    // The grace membership should should be changed
-    $this->assertEquals('Current', $this->getMembershipStatus($graceId));
-
-    // The pending membership should be changed
     $this->assertEquals('Current', $this->getMembershipStatus($pendingId));
   }
 
