@@ -29,15 +29,35 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
   public $DBResetRequired = FALSE;
   public $_entity = 'Job';
 
-  // Caches membership status names in a key, value array
+  /**
+   * Caches membership status names in a key, value array
+   *
+   * @var array
+   */
   public $_statuses;
 
-  // Caches membership types in a key, value array
+  /**
+   * Caches membership types in a key, value array
+   *
+   * @var array
+   */
   public $_types;
 
-  // Caches some reference dates
+  /**
+   * Caches some reference dates
+   *
+   * @var string
+   */
   public $_yesterday;
+
+  /**
+   * @var string
+   */
   public $_today;
+
+  /**
+   * @var string
+   */
   public $_tomorrow;
 
   public function setUp() {
@@ -49,14 +69,24 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
 
   public function loadMembershipStatuses() {
     $statuses = civicrm_api3('MembershipStatus', 'get', ['options' => ['limit' => 0]])['values'];
-    $this->_statuses = array_map(function($status) { return $status['name']; }, $statuses);
+    $this->_statuses = array_map(
+      function($status) {
+        return $status['name'];
+      },
+      $statuses
+    );
   }
 
   public function loadMembershipTypes() {
     $this->membershipTypeCreate(['name' => 'General']);
     $this->membershipTypeCreate(['name' => 'Old']);
     $types = civicrm_api3('MembershipType', 'get', ['options' => ['limit' => 0]])['values'];
-    $this->_types = array_map(function($type) { return $type['name']; }, $types);
+    $this->_types = array_map(
+      function($type) {
+        return $type['name'];
+      },
+      $types
+    );
   }
 
   public function loadReferenceDates() {
@@ -74,7 +104,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('MembershipType', 'create', [
       'id' => array_search('Old', $this->_types),
       'is_active' => TRUE,
-    ]);  
+    ]);
   }
 
   /**
@@ -232,7 +262,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
 
   /**
    * Test that by default pending memberships are excluded.
-   * 
+   *
    * The pending status is still excluded as it's in the
    * exclude_membership_status_ids list by default.
    */
@@ -258,7 +288,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
   /**
    * Test that when including test memberships,
    * pending memberships are excluded.
-   * 
+   *
    * The pending status is still excluded as it's in the
    * exclude_membership_status_ids list by default.
    */
@@ -331,7 +361,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
   /**
    * Test that when including inactive membership types,
    * pending memberships are considered.
-   * 
+   *
    * The pending status is still excluded as it's in the
    * exclude_membership_status_ids list by default.
    */
