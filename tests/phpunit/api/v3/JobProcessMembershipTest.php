@@ -112,19 +112,19 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
    * by the process as it is in `deceased` status.
    */
   public function createDeceasedMembershipThatShouldBeExpired() {
-      $contactId = $this->individualCreate(['is_deceased' => FALSE]);
-      $membershipId = $this->contactMembershipCreate([
-        'contact_id' => $contactId,
-        'start_date' => $this->_yesterday,
-        'end_date' => $this->_yesterday,
-      ]);
+    $contactId = $this->individualCreate(['is_deceased' => FALSE]);
+    $membershipId = $this->contactMembershipCreate([
+      'contact_id' => $contactId,
+      'start_date' => $this->_yesterday,
+      'end_date' => $this->_yesterday,
+    ]);
 
-      $this->callAPISuccess('Membership', 'create', [
-        'id' => $membershipId,
-        'status_id' => array_search('Deceased', $this->_statuses),
-      ]);
+    $this->callAPISuccess('Membership', 'create', [
+      'id' => $membershipId,
+      'status_id' => array_search('Deceased', $this->_statuses),
+    ]);
 
-      return $membershipId;
+    return $membershipId;
   }
 
   /**
