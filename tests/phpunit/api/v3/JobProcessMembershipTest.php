@@ -441,7 +441,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_membership_status_ids' => [
         array_search('Cancelled', $this->_statuses),
-      ]
+      ],
     ]);
 
     $this->assertEquals('Deceased', $this->getMembershipStatus($deceasedId));
@@ -457,7 +457,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_membership_status_ids' => [
         array_search('Cancelled', $this->_statuses),
-      ]
+      ],
     ]);
 
     $this->assertEquals('Grace', $this->getMembershipStatus($testId));
@@ -473,7 +473,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_membership_status_ids' => [
         array_search('Cancelled', $this->_statuses),
-      ]
+      ],
     ]);
 
     $this->assertEquals('Grace', $this->getMembershipStatus($oldId));
@@ -489,7 +489,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_membership_status_ids' => [
         array_search('Cancelled', $this->_statuses),
-      ]
+      ],
     ]);
 
     $this->assertEquals('Current', $this->getMembershipStatus($graceId));
@@ -506,7 +506,7 @@ class api_v3_JobProcessMembershipTest extends CiviUnitTestCase {
     $this->callAPISuccess('job', 'process_membership', [
       'exclude_membership_status_ids' => [
         array_search('Cancelled', $this->_statuses),
-      ]
+      ],
     ]);
 
     $this->assertEquals('Current', $this->getMembershipStatus($pendingId));
