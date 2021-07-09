@@ -798,7 +798,7 @@ SELECT  id
       ]
     ));
     //check for valid fields ( fields that are present in billing block )
-    if ($paymentProcessorBillingFields) {
+    if (!empty($paymentProcessorBillingFields)) {
       $validBillingFields = $paymentProcessorBillingFields;
     }
     else {
