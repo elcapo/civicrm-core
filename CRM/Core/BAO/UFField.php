@@ -800,7 +800,8 @@ SELECT  id
     //check for valid fields ( fields that are present in billing block )
     if ($paymentProcessorBillingFields) {
       $validBillingFields = $paymentProcessorBillingFields;
-    } else {
+    }
+    else {
       $validBillingFields = [
         'first_name',
         'middle_name',
