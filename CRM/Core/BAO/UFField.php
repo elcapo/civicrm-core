@@ -784,7 +784,7 @@ SELECT  id
    * @return bool
    *   Can the address block be hidden safe in the knowledge all fields are elsewhere collected (see CRM-15118)
    */
-  public static function assignAddressField($key, &$profileAddressFields, $profileFilter, $paymentProcessorBillingFields) {
+  public static function assignAddressField($key, &$profileAddressFields, $profileFilter, $paymentProcessorBillingFields = NULL) {
     $billing_id = CRM_Core_BAO_LocationType::getBilling();
     list($prefixName, $index) = CRM_Utils_System::explode('-', $key, 2);
 
