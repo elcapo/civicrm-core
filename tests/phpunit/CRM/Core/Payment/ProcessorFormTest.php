@@ -14,6 +14,7 @@
  * @group headless
  */
 class CRM_Core_Payment_ProcessorFormTest extends CiviUnitTestCase {
+
   public function setUp(): void {
     parent::setUp();
 
@@ -76,7 +77,6 @@ class CRM_Core_Payment_ProcessorFormTest extends CiviUnitTestCase {
     return $this->createTestableBillingProfile('custom', FALSE);
   }
 
-
   public function createTestableBillingProfile($name, $withState) {
     $billingId = CRM_Core_BAO_LocationType::getBilling();
 
@@ -117,7 +117,7 @@ class CRM_Core_Payment_ProcessorFormTest extends CiviUnitTestCase {
         'field_name' => 'state_province',
         'location_type_id' => $billingId,
         'is_required' => TRUE,
-      ]);  
+      ]);
     }
 
     $this->callAPISuccess('UFField', 'create', [
@@ -168,7 +168,9 @@ class CRM_Core_Payment_ProcessorFormTest extends CiviUnitTestCase {
         array_keys($processor->getBillingAddressFields())
       );
 
-      if (!$canBeHidden) { break; }
+      if (!$canBeHidden) {
+        break;
+      }
     }
 
     $this->assertEquals(TRUE, $canBeHidden);
@@ -205,25 +207,31 @@ class CRM_Core_Payment_ProcessorFormTest extends CiviUnitTestCase {
         array_keys($processor->getBillingAddressFields())
       );
 
-      if (!$canBeHidden) { break; }
+      if (!$canBeHidden) {
+        break;
+      }
     }
 
     $this->assertEquals(TRUE, $canBeHidden);
   }
+
 }
 
-class PaymentProcessorWithStandardBillingRequirements extends CRM_Core_Payment
-{
-  // `checkConfig` is abstract in CRM_Core_Payment
-  // so we are forced to implement it
+class PaymentProcessorWithStandardBillingRequirements extends CRM_Core_Payment {
+
+  /**
+   * again, `checkConfig` is abstract in CRM_Core_Payment, so we are forced to implement it
+   */
   public function checkConfig() {
   }
+
 }
 
-class PaymentProcessorWithCustomBillingRequirements extends CRM_Core_Payment
-{
-  // again, `checkConfig` is abstract in CRM_Core_Payment
-  // so we are forced to implement it
+class PaymentProcessorWithCustomBillingRequirements extends CRM_Core_Payment {
+
+  /**
+   * again, `checkConfig` is abstract in CRM_Core_Payment, so we are forced to implement it
+   */
   public function checkConfig() {
   }
 
@@ -239,4 +247,5 @@ class PaymentProcessorWithCustomBillingRequirements extends CRM_Core_Payment
       'postal_code' => "billing_postal_code-{$billingLocationID}",
     ];
   }
+
 }
